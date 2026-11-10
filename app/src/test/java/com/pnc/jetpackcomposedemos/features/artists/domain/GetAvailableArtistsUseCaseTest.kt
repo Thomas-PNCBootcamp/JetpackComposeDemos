@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 class GetAvailableArtistsUseCaseTest {
     @Test
     fun addition_isCorrect() {
-        Assert.assertEquals(4, 2 + 2)
+        Assert.assertEquals(3, 2 + 2)
     }
 //    @Test
 //    fun `toList never finishes on a flow that never completes`() = runTest(timeout = 2.seconds) {
