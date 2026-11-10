@@ -22,6 +22,7 @@ import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+import androidx.compose.ui.platform.LocalLocale
 
 @Composable
 fun OrdersChartCard(
@@ -31,7 +32,7 @@ fun OrdersChartCard(
 
     if(totals.isEmpty())return
     val currency = remember { NumberFormat.getCurrencyInstance(Locale.US)}
-    val locale = Locale.getDefault()
+    val locale = LocalLocale.current.platformLocale
 
     val bars = remember(totals){
         totals.map{
