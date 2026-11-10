@@ -17,11 +17,35 @@ pipeline{
     }
 
     stages{
-        stage('hello'){
+//        stage('hello'){
+//            steps{
+//                echo "Building ${env.JOB_NAME} #${env.BUILD_Number} on ${env.NODE_NAME}"
+//                bat 'java -version'
+//                bat 'git log -1 --oneline'
+//            }
+//        }
+        stage('Check tools'){
             steps{
-                echo "Building ${env.JOB_NAME} #${env.BUILD_Number} on ${env.NODE_NAME}"
                 bat 'java -version'
-                bat 'git log -1 --oneline'
+                bat 'echo ANDROID_HOME=%ANDROID_HOME%'
+                script{
+                    if (!env.ANDROID_HOME){
+                        error 'ANDROID_HOME is not set'
+                    }
+                }
+                bat "${GRADLE} --version"
+
+            }
+        }
+
+        stage('Build debug APK'){
+            steps{
+                bat "${GRADLE} assembleDebug"
+            }
+            post{
+                success{
+                    archiveArtifacts artifacts: 'app/build/outputs/apk/debug/*.apk', fingerprint: true
+                }
             }
         }
     }
