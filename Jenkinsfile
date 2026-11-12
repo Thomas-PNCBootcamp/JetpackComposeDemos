@@ -116,7 +116,7 @@ pipeline{
                     usernamePassword(credentialsId: 'android-key', usernameVariable: 'KEY_ALIAS', passwordVariable: 'KEY_PASSWORD')
                     ]){
 
-                    bat '${GRADLE} assembleRelease"
+                    bat "${GRADLE} assembleRelease"
 
                 }
                 script{
