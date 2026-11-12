@@ -120,7 +120,7 @@ pipeline{
 
                 }
                 script{
-                    env.APK_NAME = "jetpackdemos-${env.BUILD_NUMBER} - ${(env.GIT_COMMIT ?: 'local').take(7)}.apk"
+                    env.APK_NAME = "jetpackdemos-${env.BUILD_NUMBER}-${(env.GIT_COMMIT ?: 'local').take(7)}.apk"
                 }
                 bat "copy /Y app\\build\\outputs\\apk\\release\\app-release.apk ${env.APK_NAME}"
                 bat "powershell -NoProfile -ExecutionPolicy Bypass -File ci\\verify-apk.ps1 -Apk ${env.APK_NAME}"
