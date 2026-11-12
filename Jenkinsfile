@@ -37,70 +37,65 @@ pipeline{
 
             }
         }
-        stage('Android lint'){
+
+
+        stage('Verify'){
             steps{
-                bat "${GRADLE} lintDebug"
-            }
-            post{
-                always{
-                    recordIssues enabledForFailure: true,
-                        tools: [androidLintParser(pattern: 'app/build/reports/lint-results-debug.xml')]
+                catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE'){
+                    bat "${GRADLE} --continue lintDebug detekt ktlintCheck testDebugUnitTest createDebugUnitTestCoverageReport"
+
+
+
                 }
             }
         }
-        stage('Static analysis'){
-            steps{
-                bat "${GRADLE} detekt ktlintCheck"
-            }
-            post{
-                always{
-                    recordIssues enabledForFailure: true,
+
+        stage('Publish reports'){
+            parallel{
+                stage('Tests'){
+                    steps{
+                        junit testResults: 'app/build/test-results/testDebugUnitTest/*.xml', allowEmptyResults: false
+
+                    }
+                }
+
+                stage('lint'){
+                    steps{
+                        recordIssues enabledForFailure: true,
+                        tools: [androidLintParser(pattern: 'app/build/reports/lint-results-debug.xml')]
+                    }
+                }
+                stage('detekt and ktlint'){
+                    steps{
+                        recordIssues enabledForFailure: true,
                         tool:checkStyle(id: 'detekt',
-                                        name: 'detekt',
-                                        pattern: 'app/build/reports/detekt/detekt.xml'
-                            ),
+                            name: 'detekt',
+                            pattern: 'app/build/reports/detekt/detekt.xml'
+                        ),
                         qualityGates: [[threshold: 1, type: 'NEW', unstable:true ]]
 
-                    recordIssues enabledForFailure: true,
+                        recordIssues enabledForFailure: true,
                         tool:checkStyle(id: 'ktlint',
-                                        name:'ktlint',
-                                        pattern: 'app/build/reports/ktlint/**/*.xml'
+                            name:'ktlint',
+                            pattern: 'app/build/reports/ktlint/**/*.xml'
                         ),
                         qualityGates: [[threshold: 1, type: 'NEW', unstable: true ]]
 
-
+                    }
+                }
+                stage('Coverage'){
+                    steps{
+                        bat 'powershell -NoProfile -ExecutionPolicy Bypass -File ci\\coverage-gate.ps1 -Report app/build/reports/coverage/test/debug/report.xml -Min 5'
+                        recordCoverage(
+                            tools:[[parser: 'JACOCO', pattern:
+                                    'app/build/reports/coverage/test/debug/report.xml']],
+                            sourceCodeRetention: 'NEVER'
+                        )
+                    }
                 }
             }
         }
 
-        stage('Coverage'){
-            steps{
-                bat "${GRADLE} createDebugUnitTestCoverageReport"
-                bat 'powershell -NoProfile -ExecutionPolicy Bypass -File ci\\coverage-gate.ps1 -Report app/build/reports/coverage/test/debug/report.xml -Min 5'
-            }
-            post{
-                always{
-                    recordCoverage(
-                        tools:[[parser: 'JACOCO', pattern:
-                            'app/build/reports/coverage/test/debug/report.xml']],
-                        sourceCodeRetention: 'NEVER'
-                    )
-                }
-            }
-        }
-
-        stage('Unit tests'){
-            steps{
-                catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE'){
-                    bat "${GRADLE} testDebugUnitTest"
-                }
-            }
-            post{
-                always{
-                    junit testResults: 'app/build/test-results/testDebugUnitTest/*.xml', allowEmptyResults: false
-                }
-            }
-        }
 
         stage('Build debug APK'){
             steps{
